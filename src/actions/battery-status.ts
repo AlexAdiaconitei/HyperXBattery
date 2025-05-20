@@ -1,4 +1,3 @@
-// battery-status-action.ts
 import path from "path";
 import { action, SingletonAction, WillAppearEvent, WillDisappearEvent } from "@elgato/streamdeck";
 import streamDeck from "@elgato/streamdeck";

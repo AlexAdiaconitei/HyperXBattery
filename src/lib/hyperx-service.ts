@@ -16,6 +16,14 @@ export class HyperXService {
   private listeners: ((event: HyperXEvent) => void)[] = [];
   private lastKnownPowerState: 'on' | 'off' | null = null;
   private lastKnownMuteState: boolean | null = null;
+  private lastEventTimestamp = 0;
+  
+  // Periodic health check to detect stale connections
+  private healthCheckInterval: NodeJS.Timeout | undefined;
+  private healthCheckPeriod = 60 * 1000; // Check every minute
+  private deviceCheckPeriod = 5 * 60 * 1000; // Full reconnect every 5 minutes
+  private lastReconnectTime = 0;
+  
   private debug = false;
 
   private constructor() {
@@ -35,6 +43,7 @@ export class HyperXService {
     // If not connected, attempt to connect
     if (!this.hyperx) {
       this.connect();
+      this.startHealthCheck();
     }
     
     // Return unsubscribe function
@@ -44,11 +53,15 @@ export class HyperXService {
       // If no more listeners, clean up the connection
       if (this.listeners.length === 0) {
         this.cleanup();
+        this.stopHealthCheck();
       }
     };
   }
 
   private notifyListeners(event: HyperXEvent): void {
+    // Update last event timestamp
+    this.lastEventTimestamp = Date.now();
+    
     // Update state tracking
     if (event.type === 'power') {
       this.lastKnownPowerState = event.value;
@@ -76,11 +89,14 @@ export class HyperXService {
       // Import the library (which now handles reconnection internally)
       const createHyperX = require('hyperx-cloud-flight-wireless');
       
-      // Create the hyperx instance with default options
+      // Create the hyperx instance with shorter updateDelay for more responsiveness
       this.hyperx = createHyperX();
       
       // Set up event listeners
       this.setupEventListeners();
+      
+      // Record the reconnect time
+      this.lastReconnectTime = Date.now();
       
       streamDeck.logger.debug("HyperXService: Connected successfully");
       
@@ -93,39 +109,92 @@ export class HyperXService {
   private setupEventListeners(): void {
     if (!this.hyperx) return;
     
-    // Battery events
-    this.hyperx.on("battery", (pct: number) => {
-      streamDeck.logger.debug("HyperXService: Battery:", pct);
-      this.notifyListeners({ type: 'battery', value: pct });
-    });
-
-    // Power events
-    this.hyperx.on("power", (state: "on" | "off") => {
-      streamDeck.logger.debug("HyperXService: Power:", state);
-      this.notifyListeners({ type: 'power', value: state });
-    });
-
-    // Mute events
-    this.hyperx.on("muted", (isMuted: boolean) => {
-      streamDeck.logger.debug("HyperXService: Muted:", isMuted);
-      this.notifyListeners({ type: 'muted', value: isMuted });
-    });
-
-    // Error events
-    this.hyperx.on("error", (err: any) => {
-      streamDeck.logger.error("HyperXService: Error from library:", err);
-      this.notifyListeners({ type: 'error', error: err });
+    // Set up listeners for all event types
+    const events = ["battery", "power", "muted", "volume", "charging", "unknown", "connected", "disconnected"];
+    
+    events.forEach(eventType => {
+      try {
+        this.hyperx.on(eventType, (...args: any[]) => {
+          // Update timestamp for any event received
+          this.lastEventTimestamp = Date.now();
+          
+          // Handle specific event types
+          switch (eventType) {
+            case "battery":
+              streamDeck.logger.debug("HyperXService: Battery:", args[0]);
+              this.notifyListeners({ type: 'battery', value: args[0] });
+              break;
+              
+            case "power":
+              streamDeck.logger.debug("HyperXService: Power:", args[0]);
+              this.notifyListeners({ type: 'power', value: args[0] });
+              break;
+              
+            case "muted":
+              streamDeck.logger.debug("HyperXService: Muted:", args[0]);
+              this.notifyListeners({ type: 'muted', value: args[0] });
+              break;
+              
+            case "connected":
+              streamDeck.logger.debug("HyperXService: Device connected");
+              // If we were previously off, notify of power on
+              if (this.lastKnownPowerState === 'off') {
+                this.notifyListeners({ type: 'power', value: 'on' });
+              }
+              break;
+              
+            case "disconnected":
+              streamDeck.logger.debug("HyperXService: Device disconnected", args[0]);
+              break;
+              
+            default:
+              // Just update timestamp for other events
+              break;
+          }
+        });
+      } catch (err) {
+        streamDeck.logger.error(`HyperXService: Error setting up ${eventType} listener:`, err);
+      }
     });
     
-    // Connected events - can be useful for UI updates
-    this.hyperx.on("connected", () => {
-      streamDeck.logger.debug("HyperXService: Device connected");
-    });
+    // Error events handled separately
+    try {
+      this.hyperx.on("error", (err: any) => {
+        streamDeck.logger.error("HyperXService: Error from library:", err);
+        this.notifyListeners({ type: 'error', error: err });
+      });
+    } catch (err) {
+      streamDeck.logger.error("HyperXService: Error setting up error listener:", err);
+    }
+  }
+  
+  // Start periodic health check
+  private startHealthCheck(): void {
+    this.stopHealthCheck(); // Clear existing interval if any
     
-    // Disconnected events - can be useful for UI updates
-    this.hyperx.on("disconnected", (err: any) => {
-      streamDeck.logger.debug("HyperXService: Device disconnected", err);
-    });
+    this.healthCheckInterval = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastEvent = now - this.lastEventTimestamp;
+      const timeSinceLastReconnect = now - this.lastReconnectTime;
+      
+      // If we haven't received events in a while, check device state more aggressively
+      if (timeSinceLastEvent > this.healthCheckPeriod) {
+        streamDeck.logger.debug(`HyperXService: Health check - No events for ${Math.round(timeSinceLastEvent/1000)}s`);
+        
+        // If it's been a while since our last full reconnect, do one now
+        if (timeSinceLastReconnect > this.deviceCheckPeriod) {
+          streamDeck.logger.debug("HyperXService: Performing periodic full reconnect");
+          this.connect(); // This will recreate the connection
+        }
+      }
+    }, this.healthCheckPeriod);
+  }
+  
+  private stopHealthCheck(): void {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+      this.healthCheckInterval = undefined;
+    }
   }
 
   private cleanup(): void {

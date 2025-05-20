@@ -1,4 +1,3 @@
-// microphone-status-action.ts
 import path from "path";
 import { action, SingletonAction, WillAppearEvent, WillDisappearEvent } from "@elgato/streamdeck";
 import streamDeck from "@elgato/streamdeck";
@@ -22,7 +21,7 @@ export class MicrophoneStatusAction extends SingletonAction {
     this.currentEvent = ev;
     
     // Set initial state
-    ev.action.setImage(path.join(__dirname, "..", "imgs/actions/microphone-status", icons.unmuted));
+    ev.action.setImage(path.join(__dirname, "..", "imgs/actions/microphone-status", icons.disconnected));
     
     // Subscribe to HyperX service events
     this.unsubscribe = HyperXService.getInstance().subscribe(this.handleEvent.bind(this));
