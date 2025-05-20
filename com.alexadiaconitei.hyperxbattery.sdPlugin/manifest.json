@@ -1,0 +1,61 @@
+{
+	"Name": "HyperXBattery",
+	"Version": "0.1.0.0",
+	"Author": "AlexAdiaconitei",
+	"Actions": [
+		{
+			"Name": "Battery Status",
+			"UUID": "com.alexadiaconitei.hyperxbattery.battery",
+			"Icon": "imgs/actions/battery-status/icon",
+			"Tooltip": "Displays the battery status.",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/battery-status/disconnected",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Microphone Status",
+			"UUID": "com.alexadiaconitei.hyperxbattery.microphone",
+			"Icon": "imgs/actions/microphone-status/icon",
+			"Tooltip": "Displays the microphone status.",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/microphone-status/unmuted",
+					"TitleAlignment": "middle"
+				}
+			]
+		}
+	],
+	"Category": "HyperXBattery",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "Lightweight plugin for showing your HyperX Cloud Flight headset battery on your Stream Deck",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 2,
+	"Software": {
+		"MinimumVersion": "6.4"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "12"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "20",
+		"Debug": "enabled"
+	},
+	"UUID": "com.alexadiaconitei.hyperxbattery"
+}
