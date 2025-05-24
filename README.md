@@ -15,7 +15,7 @@ A Stream Deck plugin that displays the battery level and microphone status of yo
 
 ## 📥 Installation
 
-1. Download the latest release from the [GitHub repository](https://github.com/AlexAdiaconitei/HyperXBattery)
+1. Download the latest release from the [GitHub repository](https://github.com/AlexAdiaconitei/HyperXBattery/releases)
 2. Double-click the downloaded file to install it on your Stream Deck
 3. Drag the Battery Status and/or Microphone Status actions to your desired keys
 
