@@ -6,6 +6,8 @@ A Stream Deck plugin that displays the battery level and microphone status of yo
 ![Current Status](https://img.shields.io/badge/status-working-brightgreen)
 ![Supported Device](https://img.shields.io/badge/supports-HyperX%20Cloud%20Flight-red)
 
+[![Get it on marketplace](https://docs.elgato.com/img/badges/marketplace-light.svg)](https://marketplace.elgato.com/product/hyperxbattery-037d79ee-5bec-4896-9bfe-263f34ed193b)
+
 ## ✨ Features
 
 - 🔋 **Real-time battery monitoring** - See your headset's battery percentage at a glance
