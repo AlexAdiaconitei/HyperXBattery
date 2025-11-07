@@ -1,6 +1,7 @@
 {
     "scripts": {
-        "build": "rollup -c",
+        "build": "rollup -c && npm run copy-deps",
+        "copy-deps": "node -e \"const fs=require('fs');const path=require('path');const src='node_modules';const dst='com.alexadiaconitei.hyperxbattery.sdPlugin/node_modules';if(fs.existsSync(dst))fs.rmSync(dst,{recursive:true});fs.mkdirSync(dst,{recursive:true});['hyperx-cloud-flight-wireless','node-hid','eventemitter3'].forEach(m=>{const s=path.join(src,m);const d=path.join(dst,m);if(fs.existsSync(s)){fs.cpSync(s,d,{recursive:true})}})\"",
         "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.alexadiaconitei.hyperxbattery\""
     },
     "type": "module",
