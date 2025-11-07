@@ -1,7 +1,7 @@
 {
     "scripts": {
         "build": "rollup -c && npm run copy-deps",
-        "copy-deps": "node scripts/copy-deps.js",
+        "copy-deps": "node scripts/copy-deps.cjs",
         "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.alexadiaconitei.hyperxbattery\""
     },
     "type": "module",
