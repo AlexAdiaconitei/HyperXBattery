@@ -1,7 +1,6 @@
 import { createRequire } from 'module';
 import streamDeck from "@elgato/streamdeck";
-
-const require = createRequire(import.meta.url);
+import createHyperX from 'hyperx-cloud-flight-wireless';
 
 // Event types
 export type BatteryEvent = { type: 'battery'; value: number };
@@ -85,9 +84,6 @@ export class HyperXService {
     try {
       // Ensure we clean up any existing connection first
       this.cleanup();
-      
-      // Import the library (which now handles reconnection internally)
-      const createHyperX = require('hyperx-cloud-flight-wireless');
       
       // Create the hyperx instance with shorter updateDelay for more responsiveness
       this.hyperx = createHyperX();
